@@ -22,7 +22,7 @@ hip_yaw = pi/4;
 hip_pitch = 0;
 knee_pitch = 0;
 
-joint_angles = [hip_yaw, hip_pitch, knee_pitch];
+q = [hip_yaw, hip_pitch, knee_pitch];
 
 % Body Orientation (measured e.g. by an IMU)
 body_roll = pi/10; % around x-axis
@@ -35,7 +35,7 @@ C_IB = eul2rotm(body_orientation);
 
 foot_positions = zeros(3,3);
 for k=1:3
-    foot_positions(1:3, k) = findBaseToFootVector(joint_angles, body_dimensions, leg_dimensions, distance_hip_joints);
+    foot_positions(1:3, k) = findBaseToFootVector(q, body_dimensions, leg_dimensions, distance_hip_joints);
 end
 
 

@@ -1,11 +1,11 @@
-function [foot_position] = findBaseToFootVector(joint_angles, body_dimensions, leg_dimensions, distance_hip_joints)
+function [foot_position] = findBaseToFootVector(q, body_dimensions, leg_dimensions, distance_hip_joints)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
 % joint angles
-hip_yaw = joint_angles(1);
-hip_pitch = joint_angles(2);
-knee_pitch = joint_angles(3);
+hip_yaw = q(1);
+hip_pitch = q(2);
+knee_pitch = q(3);
 
 % body dimensions
 body_length = body_dimensions(1);
