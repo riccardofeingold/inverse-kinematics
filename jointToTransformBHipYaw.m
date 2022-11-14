@@ -2,7 +2,6 @@ function [T_B_hip_yaw] = jointToTransformBHipYaw(q, r_b_hip_yaw)
 %JOINTTOTRANSFORMTBHIPYAW Summary of this function goes here
 %   Detailed explanation goes here
 hip_yaw = q(1);
-r_b_hip_yaw
 angle = atan2(r_b_hip_yaw(2), r_b_hip_yaw(1));
 
 C_B_hip_yaw = [
