@@ -3,7 +3,8 @@ function [T_knee_pitch_foot] = jointToTransformKneePitchFoot(q,r_knee_pitch_foot
 %   Detailed explanation goes here
 % % For the beginning we assume the foot frame orientation to be the same
 % % as the knee_pitch frame.
-foot_euler_angles = q(4:6)';
+% foot_euler_angles = q(4:6)';
+foot_euler_angles = [0 0 0];
 C_knee_pitch_foot = eul2rotm(foot_euler_angles);
 
 % C_knee_pitch_foot = eye(3);

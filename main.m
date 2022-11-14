@@ -41,7 +41,7 @@ q_feet_BR = [0 0 0]';
 
 q = [
     q_FL      q_BL      q_FR      q_BR;
-    q_feet_FL q_feet_BL q_feet_FR q_feet_BR;
+    %q_feet_FL q_feet_BL q_feet_FR q_feet_BR;
 ];
 
 % Which feet are not going to move
@@ -62,10 +62,10 @@ r_IB = T_IB(1:3, 4);
 C_IB = T_IB(1:3,1:3);
 
 % Foot position w.r.t. B frame
-B_r_BFL = findBaseToFootVector(q(1:6, 1), hip_yaw_location(1:3, 1), leg_dimensions, distance_hip_joints);
-B_r_BBL = findBaseToFootVector(q(1:6, 2), hip_yaw_location(1:3, 2), leg_dimensions, distance_hip_joints);
-B_r_BFR = findBaseToFootVector(q(1:6, 3), hip_yaw_location(1:3, 3), leg_dimensions, distance_hip_joints);
-B_r_BBR = findBaseToFootVector(q(1:6, 4), hip_yaw_location(1:3, 4), leg_dimensions, distance_hip_joints);
+B_r_BFL = findBaseToFootVector(q(1:3, 1), hip_yaw_location(1:3, 1), leg_dimensions, distance_hip_joints);
+B_r_BBL = findBaseToFootVector(q(1:3, 2), hip_yaw_location(1:3, 2), leg_dimensions, distance_hip_joints);
+B_r_BFR = findBaseToFootVector(q(1:3, 3), hip_yaw_location(1:3, 3), leg_dimensions, distance_hip_joints);
+B_r_BBR = findBaseToFootVector(q(1:3, 4), hip_yaw_location(1:3, 4), leg_dimensions, distance_hip_joints);
 
 % relative vectors from one joint frame to the next 
 r_hip_yaw_hip_pitch = [distance_hip_joints; 0; 0];
@@ -75,10 +75,10 @@ r_knee_pitch_foot = [lower_leg; 0; 0];
 relative_joint_vectors = [r_hip_yaw_hip_pitch r_hip_pitch_knee_pitch r_knee_pitch_foot];
 
 % Calculate positional Jacobians w.r.t. frame B
-B_Jp_FL = jointToPositionJacobian(q(1:6, 1), hip_yaw_location(1:3, 1), relative_joint_vectors);
-B_Jp_BL = jointToPositionJacobian(q(1:6, 2), hip_yaw_location(1:3, 2), relative_joint_vectors);
-B_Jp_FR = jointToPositionJacobian(q(1:6, 3), hip_yaw_location(1:3, 3), relative_joint_vectors);
-B_Jp_BR = jointToPositionJacobian(q(1:6, 4), hip_yaw_location(1:3, 4), relative_joint_vectors);
+B_Jp_FL = jointToPositionJacobian(q(1:3, 1), hip_yaw_location(1:3, 1), relative_joint_vectors);
+B_Jp_BL = jointToPositionJacobian(q(1:3, 2), hip_yaw_location(1:3, 2), relative_joint_vectors);
+B_Jp_FR = jointToPositionJacobian(q(1:3, 3), hip_yaw_location(1:3, 3), relative_joint_vectors);
+B_Jp_BR = jointToPositionJacobian(q(1:3, 4), hip_yaw_location(1:3, 4), relative_joint_vectors);
 
 % adjust the size of the positional jacobian matrices
 B_Jp_FL = [
@@ -106,8 +106,6 @@ I_Jp_BL = [eye(3) -C_IB*skewMatrix(B_r_BBL) C_IB*B_Jp_BL];
 I_Jp_FR = [eye(3) -C_IB*skewMatrix(B_r_BFR) C_IB*B_Jp_FR];
 I_Jp_BR = [eye(3) -C_IB*skewMatrix(B_r_BBR) C_IB*B_Jp_BR];
 
-wt = [0, 0, 0]';
-u_FR = pinv(I_Jp_FR)*wt
 % u = zeros(18,1);
 % u(7,1) = 10;
 % velocity = I_Jp_FL*u
@@ -119,7 +117,13 @@ robot.DataFormat = 'row';
 subplot(6,2,[7 8 9 10 11 12]);
 
 % % FL,FL_feet,BL,BL_feet,FR,FR_feet,BR, BR_feet
-q_urdf=[q(1:3, 1)' q(4:6, 1)' q(1:3, 2)' q(4:6, 2)' q(1:3, 3)' q(4:6, 3)' q(1:3, 4)' q(4:6, 4)'];
+q_urdf=[q(1:3, 1)' 0 0 0 q(1:3, 2)' 0 0 0 q(1:3, 3)' 0 0 0 q(1:3, 4)' 0 0 0];
 show(robot, q_urdf, 'frames', 'on', 'PreservePlot', 0);
 
+% inverse kinematics
+I_r_des = [-2, -2, -1]';
+q_0 = zeros(3,4);
+tol = 0.001;
+
+q_invKin = InverseKinematics_solver(I_r_des, eye(3), q_0, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, stationary_feet, relative_joint_vectors)
 

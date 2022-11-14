@@ -7,7 +7,7 @@ foot_positions = zeros(3,3);
 counter = 1;
 for k=1:4
     if stationary_feet(k) == 0
-        foot_positions(1:3, counter) = findBaseToFootVector(q(1:6, k), hip_yaw_locations(1:3, k), leg_dimensions, distance_hip_joints);
+        foot_positions(1:3, counter) = findBaseToFootVector(q(1:3, k), hip_yaw_locations(1:3, k), leg_dimensions, distance_hip_joints);
         counter = counter + 1;
     end
 end
