@@ -1,4 +1,4 @@
-function [foot_position] = findBaseToFootVector(q, r_b_hip_yaw, leg_dimensions, distance_hip_joints)
+function [foot_position, C_BQ] = findBaseToFootVector(q, r_b_hip_yaw, leg_dimensions, distance_hip_joints)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -26,5 +26,6 @@ T_BQ = T_B_hip_yaw * T_hip_yaw_hip_pitch * T_hip_pitch_knee_pitch * T_knee_pitch
 
 % End effector position: From base frame to foot frame Q = [FL, FR, BL, BR]
 foot_position = T_BQ(1:3, 4);
+C_BQ = T_BQ(1:3, 1:3);
 end
 

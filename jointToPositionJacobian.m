@@ -4,7 +4,7 @@ function [B_Jp_qj] = jointToPositionJacobian(q, r_b_hip_yaw, relative_joint_vect
 % relative joint vector positions
 r_hip_yaw_hip_pitch = relative_joint_vectors(1:3, 1);
 r_hip_pitch_knee_pitch = relative_joint_vectors(1:3, 2);
-r_knee_pitch_foot = relative_joint_vectors(1:3, 3)
+r_knee_pitch_foot = relative_joint_vectors(1:3, 3);
 
 % Compute homogeneous transformation matrices
 T_B_hip_yaw = jointToTransformBHipYaw(q, r_b_hip_yaw);

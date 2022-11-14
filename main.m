@@ -94,11 +94,27 @@ B_Jp_BR = [
     zeros(3,3) zeros(3,3) zeros(3,3) B_Jp_BR;
 ];
 % % Calculate rotational Jacobians w.r.t. frame B
-% B_Jr_FL = jointToRotationJacobian(q, hip_yaw_location(1), relative_joint_vectors);
-% B_Jr_BL = jointToRotationJacobian(q, hip_yaw_location(2), relative_joint_vectors);
-% B_Jr_FR = jointToRotationJacobian(q, hip_yaw_location(3), relative_joint_vectors);
-% B_Jr_BR = jointToRotationJacobian(q, hip_yaw_location(4), relative_joint_vectors);
+B_Jr_FL = jointToRotationJacobian(q(1:3, 1), hip_yaw_location(1:3, 1), relative_joint_vectors);
+B_Jr_BL = jointToRotationJacobian(q(1:3, 2), hip_yaw_location(1:3, 2), relative_joint_vectors);
+B_Jr_FR = jointToRotationJacobian(q(1:3, 3), hip_yaw_location(1:3, 3), relative_joint_vectors);
+B_Jr_BR = jointToRotationJacobian(q(1:3, 4), hip_yaw_location(1:3, 4), relative_joint_vectors);
 
+% % Adjust the size of the matrices
+B_Jr_FL = [
+    B_Jr_FL zeros(3,3) zeros(3,3) zeros(3,3)
+];
+
+B_Jr_BL = [
+    zeros(3,3) B_Jr_BL zeros(3,3) zeros(3,3)
+];
+
+B_Jr_FR = [
+    zeros(3,3) zeros(3,3) B_Jr_FR zeros(3,3)
+];
+
+B_Jr_BR = [
+    zeros(3,3) zeros(3,3) B_Jr_BR zeros(3,3)
+];
 
 % % Calculate positional jacobians w.r.t. frame I
 I_Jp_FL = [eye(3) -C_IB*skewMatrix(B_r_BFL) C_IB*B_Jp_FL];
@@ -106,10 +122,11 @@ I_Jp_BL = [eye(3) -C_IB*skewMatrix(B_r_BBL) C_IB*B_Jp_BL];
 I_Jp_FR = [eye(3) -C_IB*skewMatrix(B_r_BFR) C_IB*B_Jp_FR];
 I_Jp_BR = [eye(3) -C_IB*skewMatrix(B_r_BBR) C_IB*B_Jp_BR];
 
-% u = zeros(18,1);
-% u(7,1) = 10;
-% velocity = I_Jp_FL*u
 % % Calculate rotational jacobians w.r.t. frame I
+I_Jr_FL = [zeros(3,3) C_IB C_IB*B_Jr_FL];
+I_Jr_BL = [zeros(3,3) C_IB C_IB*B_Jr_BL];
+I_Jr_FR = [zeros(3,3) C_IB C_IB*B_Jr_FR];
+I_Jr_BR = [zeros(3,3) C_IB C_IB*B_Jr_BR];
 
 % Visualize joint positions
 robot = importrobot("magnecko.urdf");
@@ -121,9 +138,10 @@ q_urdf=[q(1:3, 1)' 0 0 0 q(1:3, 2)' 0 0 0 q(1:3, 3)' 0 0 0 q(1:3, 4)' 0 0 0];
 show(robot, q_urdf, 'frames', 'on', 'PreservePlot', 0);
 
 % inverse kinematics
-I_r_des = [-2, -2, -1]';
+I_r_des = [0, 0, -2]';
+I_C_des = eye(3,3);
 q_0 = zeros(3,4);
-tol = 0.001;
+tol = 0.1;
 
-q_invKin = InverseKinematics_solver(I_r_des, eye(3), q_0, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, stationary_feet, relative_joint_vectors)
+q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_0, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, stationary_feet, relative_joint_vectors);
 
