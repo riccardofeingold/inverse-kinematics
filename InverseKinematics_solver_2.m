@@ -16,29 +16,7 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
     [T_IB, T_BI] = getTransformIB(q, body_orientation, leg_dimensions, distance_hip_joints, hip_yaw_location, stationary_feet);
     C_IB = T_IB(1:3, 1:3);
     
-    % joint constraints
-    J_cFL = [
-        zeros(3,6) ones(3,3) zeros(3,9);
-    ];
-
-    J_cBL = [
-        zeros(3,9) ones(3,3) zeros(3, 6);
-    ];
-
-    J_cFR = [
-        zeros(3,12) ones(3,3) zeros(3, 3);
-    ];
-
-    J_cBR = [
-        zeros(3,15) ones(3,3);
-    ];
-
     if stationary_feet(1) == 1 % FL
-        J_c = [
-            J_cBL;
-            J_cFR;
-            J_cBR;
-        ];
         % Calculate all the jacobians needed
         B_r_BQ = findBaseToFootVector(q(1:3, 1), hip_yaw_location(1:3, 1), leg_dimensions, distance_hip_joints);
         B_Jp = jointToPositionJacobian(q(1:3, 1), hip_yaw_location(1:3,1), relative_joint_vectors);
@@ -61,11 +39,6 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
         % pose error
         dxe = [dr; dph];
     elseif stationary_feet(2) == 1 % BL
-        J_c = [
-            J_cFL;
-            J_cFR;
-            J_cBR;
-        ];
         % Calculate all the jacobians needed
         B_r_BQ = findBaseToFootVector(q(1:3, 2), hip_yaw_location(1:3, 2), leg_dimensions, distance_hip_joints);
         B_Jp = jointToPositionJacobian(q(1:3, 2), hip_yaw_location(1:3,2), relative_joint_vectors);
@@ -88,11 +61,6 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
         % pose error
         dxe = [dr; dph];
     elseif stationary_feet(3) == 1 % FR
-        J_c = [
-            J_cFL;
-            J_cBL;
-            J_cBR;
-        ];
         % Calculate all the jacobians needed
         B_r_BQ = findBaseToFootVector(q(1:3, 3), hip_yaw_location(1:3, 3), leg_dimensions, distance_hip_joints);
         B_Jp = jointToPositionJacobian(q(1:3, 3), hip_yaw_location(1:3,3), relative_joint_vectors);
@@ -115,11 +83,6 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
         % pose error
         dxe = [dr; dph];
     elseif stationary_feet(4) == 1 % BR
-        J_c = [
-            J_cFL;
-            J_cBL;
-            J_cFR;
-        ];
         % Calculate all the jacobians needed
         B_r_BQ = findBaseToFootVector(q(1:3, 4), hip_yaw_location(1:3, 4), leg_dimensions, distance_hip_joints);
         B_Jp = jointToPositionJacobian(q(1:3, 4), hip_yaw_location(1:3,4), relative_joint_vectors);
@@ -159,28 +122,31 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
     I_J_pinv = size(pinv(I_J, lambda))
     I_Jr_pinv = pinv(I_Jr, lambda);
     I_Jp_pinv = pinv(I_Jp, lambda);
-   
-
-    N_c_new = eye(18,18) - pinv(J_c)*J_c;
-    kp = 5;
-
-    v_des = zeros(3,1);
-    v_command = v_des + kp*dr;
-    Dq = N_c_new*pinv(I_Jp*N_c_new)*v_command;
-
-    q_vector = q_vector + Dq*0.1
     
-%     J_c = [
-%         zeros(1,6) zeros(1,3) ones(1,3) zeros(1, 6);
-%         zeros(1,6) zeros(1,3) zeros(1,3) ones(1,3) zeros(1,3);
-%         zeros(1,6) zeros(1,3) zeros(1,3) zeros(1,3) ones(1,3);
-%         zeros(3,6) zeros(3,3) zeros(3,3) zeros(3,3) zeros(3,3);
-%     ];
+    % joint constraints
+    J_cFL = [
+        zeros(6,6) ones(6,3) zeros(6, 9);
+    ];
+    J_cFR = [
+        zeros(6,6) zeros(6,3) ones(6,3) zeros(6, 6);
+    ];
 
-%     N_cFL = eye(18,18) - pinv(J_cFL)*J_cFL;
-%     N_cFR = eye(18,18) - pinv(J_cFR)*J_cFR;
-%     N_c = eye(18,18) - pinv(J_c)*J_c;
-%     I_Jp_pinv = pinv(I_Jp*N_c, lambda);
+    J_c = [
+        J_cFL;
+        J_cFR;
+    ];
+    
+    J_c = [
+        zeros(1,6) zeros(1,3) ones(1,3) zeros(1, 6);
+        zeros(1,6) zeros(1,3) zeros(1,3) ones(1,3) zeros(1,3);
+        zeros(1,6) zeros(1,3) zeros(1,3) zeros(1,3) ones(1,3);
+        zeros(3,6) zeros(3,3) zeros(3,3) zeros(3,3) zeros(3,3);
+    ];
+
+    N_cFL = eye(18,18) - pinv(J_cFL)*J_cFL;
+    N_cFR = eye(18,18) - pinv(J_cFR)*J_cFR;
+    N_c = eye(18,18) - pinv(J_c)*J_c;
+    I_Jp_pinv = pinv(I_Jp*N_c, lambda);
 
     % N_redundancy = eye(18,18) - I_J_pinv*I_J;
     % 6. Update the generalized coordinates
@@ -214,7 +180,6 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
 %     Dq = I_J_pinv*v_command;
 % 
 %     q_vector = q_vector + Dq*0.1;
-
     % Multitask with priorization
 %     w1 = [1 1 1 1 1 1]';
 %     w2 = [0 0 0 0 0 0]';

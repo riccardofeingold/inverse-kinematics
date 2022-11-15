@@ -161,13 +161,24 @@ show(robot, q_urdf, 'frames', 'on', 'PreservePlot', 0);
 % inverse kinematics
 I_r_des = [0, 0, -2]';
 I_C_des = zeros(3,3);
-q_0 = zeros(3,4);
+q_0 = q;
 tol = 0.1;
 
-q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_0, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [0 0 1 0], relative_joint_vectors)
-q_invKin = reshape(q_invKin(7:18), 3,4);
-q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_invKin, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [0 1 0 0], relative_joint_vectors)
-q_invKin = reshape(q_invKin(7:18), 3,4);
-q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_invKin, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [1 0 0 0], relative_joint_vectors)
-q_invKin = reshape(q_invKin(7:18), 3,4);
-q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_invKin, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [0 0 0 1], relative_joint_vectors)
+
+version = 1;
+if version == 1
+    q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_0, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [1 0 0 0], relative_joint_vectors)
+    q_0 = [
+        zeros(6,1);
+        reshape(q,[],1);
+    ];
+    q_error = q_0 - q_invKin
+    q_invKin = reshape(q_invKin(7:18), 3,4);
+    q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_invKin, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [0 1 0 0], relative_joint_vectors)
+    q_invKin = reshape(q_invKin(7:18), 3,4);
+    q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_invKin, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [0 0 1 0], relative_joint_vectors)
+    q_invKin = reshape(q_invKin(7:18), 3,4);
+    q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_invKin, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [0 0 0 1], relative_joint_vectors)
+elseif version == 2
+    q_invKin = InverseKinematics_solver_2(I_r_des, I_C_des, q_0, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [1 0 0 0], relative_joint_vectors)
+end
