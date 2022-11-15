@@ -17,7 +17,49 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
     C_IB = T_IB(1:3, 1:3);
     
     if stationary_feet(1) == 1 % FL
+        % Calculate all the jacobians needed
+        B_r_BQ = findBaseToFootVector(q(1:3, 1), hip_yaw_location(1:3, 1), leg_dimensions, distance_hip_joints);
+        B_Jp = jointToPositionJacobian(q(1:3, 1), hip_yaw_location(1:3,1), relative_joint_vectors);
+        B_Jp = [
+            B_Jp zeros(3,3) zeros(3,3) zeros(3,3);
+        ];
+        B_Jr = jointToRotationJacobian(q(1:3, 1), hip_yaw_location(1:3, 1), relative_joint_vectors);
+        B_Jr = [
+            B_Jr zeros(3,3) zeros(3,3) zeros(3,3)
+        ];
+
+        % Position error
+        I_r_IE_current = findBaseToFootVector(q(1:3,1), hip_yaw_location(1:3, 1), leg_dimensions, distance_hip_joints)
+        dr = I_r_IE_des - I_r_IE_current; 
+        [foot_position, C_BFL] = findBaseToFootVector(q(1:3, 1), hip_yaw_location(1:3,1), leg_dimensions, distance_hip_joints);
+        [T_IB, T_BI] = getTransformIB(q, body_orientation, leg_dimensions, distance_hip_joints, hip_yaw_location, stationary_feet);
+        C_IFL = T_IB(1:3, 1:3)*C_BFL;
+        rotation_error = C_IE_des*C_IFL';
+        dph = rotMatToRotVec(rotation_error); 
+        % pose error
+        dxe = [dr; dph];
     elseif stationary_feet(2) == 1 % BL
+        % Calculate all the jacobians needed
+        B_r_BQ = findBaseToFootVector(q(1:3, 2), hip_yaw_location(1:3, 2), leg_dimensions, distance_hip_joints);
+        B_Jp = jointToPositionJacobian(q(1:3, 2), hip_yaw_location(1:3,2), relative_joint_vectors);
+        B_Jp = [
+            zeros(3,3) B_Jp zeros(3,3) zeros(3,3);
+        ];
+        B_Jr = jointToRotationJacobian(q(1:3, 2), hip_yaw_location(1:3, 2), relative_joint_vectors);
+        B_Jr = [
+            zeros(3,3) B_Jr zeros(3,3) zeros(3,3)
+        ];
+
+        % Position error
+        I_r_IE_current = findBaseToFootVector(q(1:3,2), hip_yaw_location(1:3, 2), leg_dimensions, distance_hip_joints)
+        dr = I_r_IE_des - I_r_IE_current; 
+        [foot_position, C_BFL] = findBaseToFootVector(q(1:3, 2), hip_yaw_location(1:3,2), leg_dimensions, distance_hip_joints);
+        [T_IB, T_BI] = getTransformIB(q, body_orientation, leg_dimensions, distance_hip_joints, hip_yaw_location, stationary_feet);
+        C_IFL = T_IB(1:3, 1:3)*C_BFL;
+        rotation_error = C_IE_des*C_IFL';
+        dph = rotMatToRotVec(rotation_error); 
+        % pose error
+        dxe = [dr; dph];
     elseif stationary_feet(3) == 1 % FR
         % Calculate all the jacobians needed
         B_r_BQ = findBaseToFootVector(q(1:3, 3), hip_yaw_location(1:3, 3), leg_dimensions, distance_hip_joints);
@@ -41,6 +83,27 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
         % pose error
         dxe = [dr; dph];
     elseif stationary_feet(4) == 1 % BR
+        % Calculate all the jacobians needed
+        B_r_BQ = findBaseToFootVector(q(1:3, 4), hip_yaw_location(1:3, 4), leg_dimensions, distance_hip_joints);
+        B_Jp = jointToPositionJacobian(q(1:3, 4), hip_yaw_location(1:3,4), relative_joint_vectors);
+        B_Jp = [
+            zeros(3,3) zeros(3,3) zeros(3,3) B_Jp;
+        ];
+        B_Jr = jointToRotationJacobian(q(1:3, 4), hip_yaw_location(1:3, 4), relative_joint_vectors);
+        B_Jr = [
+            zeros(3,3) zeros(3,3) zeros(3,3) B_Jr;
+        ];
+
+        % Position error
+        I_r_IE_current = findBaseToFootVector(q(1:3,4), hip_yaw_location(1:3, 4), leg_dimensions, distance_hip_joints)
+        dr = I_r_IE_des - I_r_IE_current; 
+        [foot_position, C_BFL] = findBaseToFootVector(q(1:3, 4), hip_yaw_location(1:3,4), leg_dimensions, distance_hip_joints);
+        [T_IB, T_BI] = getTransformIB(q, body_orientation, leg_dimensions, distance_hip_joints, hip_yaw_location, stationary_feet);
+        C_IFL = T_IB(1:3, 1:3)*C_BFL;
+        rotation_error = C_IE_des*C_IFL';
+        dph = rotMatToRotVec(rotation_error); 
+        % pose error
+        dxe = [dr; dph];
     end
     
     % reshaping joint matrix to vector
@@ -57,10 +120,42 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
     
     % 4. Update the psuedo inverse
     I_J_pinv = pinv(I_J, lambda);
+    I_Jr_pinv = pinv(I_Jr, lambda);
+    I_Jp_pinv = pinv(I_Jp, lambda);
     
+    % joint constraints
+    J_cFL = [
+        zeros(18,6) ones(18,3) zeros(18, 9);
+    ];
+    J_cFR = [
+        zeros(18,6) zeros(18,3) ones(18,3) zeros(18, 6);
+    ];
+
+    J_c = [
+        J_cFL;
+        J_cFR;
+    ];
+
+    N_c = eye(18,18) - pinv(J_c)*J_c;
+    I_Jp_pinv = pinv(I_Jp*N_c, lambda);
+
+
     % 6. Update the generalized coordinates
-    q_vector = q_vector + alpha*I_J_pinv*dxe;
+    % inverse kinematics using whole gemetric jacobian
+    % % q_vector = q_vector + alpha*I_J_pinv*dxe;
     
+    % shortest path method using rotation error vector
+    % % kpr = 0.5;
+    % % q_vector = q_vector + kpr*I_Jr_pinv*dph;
+    
+    % trajectory controller using dq
+    kp = 5;
+
+    v_des = zeros(3,1);
+    v_command = v_des + kp*dr;
+    Dq = N_c*I_Jp_pinv*v_command;
+    
+    q_vector = q_vector + Dq*0.1;
     % Turn q_vector into matrix
     q = reshape(q_vector(7:18), 3, 4);
     % Update robot
