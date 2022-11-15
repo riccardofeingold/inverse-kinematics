@@ -159,7 +159,7 @@ q_urdf=[q(1:3, 1)' 0 0 0 q(1:3, 2)' 0 0 0 q(1:3, 3)' 0 0 0 q(1:3, 4)' 0 0 0];
 show(robot, q_urdf, 'frames', 'on', 'PreservePlot', 0);
 
 % inverse kinematics
-I_r_des = [1, 1, -0.5]';
+I_r_des = [2, 2, -1]';
 I_C_des = zeros(3,3);
 q_0 = q;
 tol = 0.1;
