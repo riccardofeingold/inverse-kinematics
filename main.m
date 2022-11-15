@@ -159,13 +159,13 @@ q_urdf=[q(1:3, 1)' 0 0 0 q(1:3, 2)' 0 0 0 q(1:3, 3)' 0 0 0 q(1:3, 4)' 0 0 0];
 show(robot, q_urdf, 'frames', 'on', 'PreservePlot', 0);
 
 % inverse kinematics
-I_r_des = [0, 0, -2]';
+I_r_des = [1, 1, -0.5]';
 I_C_des = zeros(3,3);
 q_0 = q;
 tol = 0.1;
 
 
-version = 1;
+version = 2;
 if version == 1
     q_invKin = InverseKinematics_solver(I_r_des, I_C_des, q_0, tol, robot, hip_yaw_location, leg_dimensions, body_orientation, distance_hip_joints, [1 0 0 0], relative_joint_vectors)
     q_0 = [

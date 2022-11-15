@@ -16,25 +16,30 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
     [T_IB, T_BI] = getTransformIB(q, body_orientation, leg_dimensions, distance_hip_joints, hip_yaw_location, stationary_feet);
     C_IB = T_IB(1:3, 1:3);
     
+    % body constraints
+    J_cB = [
+        eye(3,3) eye(3,3) zeros(3,12);
+    ];
     % joint constraints
     J_cFL = [
-        zeros(3,6) ones(3,3) zeros(3,9);
+        zeros(3,6) eye(3,3) zeros(3,9);
     ];
 
     J_cBL = [
-        zeros(3,9) ones(3,3) zeros(3, 6);
+        zeros(3,9) eye(3,3) zeros(3, 6);
     ];
 
     J_cFR = [
-        zeros(3,12) ones(3,3) zeros(3, 3);
+        zeros(3,12) eye(3,3) zeros(3, 3);
     ];
 
     J_cBR = [
-        zeros(3,15) ones(3,3);
+        zeros(3,15) eye(3,3);
     ];
 
     if stationary_feet(1) == 1 % FL
         J_c = [
+            J_cB;
             J_cBL;
             J_cFR;
             J_cBR;
@@ -62,6 +67,7 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
         dxe = [dr; dph];
     elseif stationary_feet(2) == 1 % BL
         J_c = [
+            J_cB;
             J_cFL;
             J_cFR;
             J_cBR;
@@ -89,6 +95,7 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
         dxe = [dr; dph];
     elseif stationary_feet(3) == 1 % FR
         J_c = [
+            J_cB;
             J_cFL;
             J_cBL;
             J_cBR;
@@ -116,6 +123,7 @@ while (it==0 || (norm(dxe)>tol && it < max_it))
         dxe = [dr; dph];
     elseif stationary_feet(4) == 1 % BR
         J_c = [
+            J_cB;
             J_cFL;
             J_cBL;
             J_cFR;
