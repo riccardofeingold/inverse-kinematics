@@ -56,99 +56,12 @@ body_yaw = pi/20; % around z-axis
 
 body_orientation = [body_roll, body_pitch, body_yaw];
 
-[T_IB, T_BI] = getTransformIB(q, body_orientation, leg_dimensions, distance_hip_joints, hip_yaw_location, stationary_feet);
-r_BI = T_BI(1:3,4);
-r_IB = T_IB(1:3, 4);
-C_IB = T_IB(1:3,1:3);
-
-% Foot position w.r.t. B frame
-B_r_BFL = findBaseToFootVector(q(1:3, 1), hip_yaw_location(1:3, 1), leg_dimensions, distance_hip_joints);
-B_r_BBL = findBaseToFootVector(q(1:3, 2), hip_yaw_location(1:3, 2), leg_dimensions, distance_hip_joints);
-B_r_BFR = findBaseToFootVector(q(1:3, 3), hip_yaw_location(1:3, 3), leg_dimensions, distance_hip_joints);
-B_r_BBR = findBaseToFootVector(q(1:3, 4), hip_yaw_location(1:3, 4), leg_dimensions, distance_hip_joints);
-
 % relative vectors from one joint frame to the next 
 r_hip_yaw_hip_pitch = [distance_hip_joints; 0; 0];
 r_hip_pitch_knee_pitch = [upper_leg; 0; 0];
 r_knee_pitch_foot = [lower_leg; 0; 0];
 
 relative_joint_vectors = [r_hip_yaw_hip_pitch r_hip_pitch_knee_pitch r_knee_pitch_foot];
-
-% Calculate positional Jacobians w.r.t. frame B
-B_Jp_FL = jointToPositionJacobian(q(1:3, 1), hip_yaw_location(1:3, 1), relative_joint_vectors);
-B_Jp_BL = jointToPositionJacobian(q(1:3, 2), hip_yaw_location(1:3, 2), relative_joint_vectors);
-B_Jp_FR = jointToPositionJacobian(q(1:3, 3), hip_yaw_location(1:3, 3), relative_joint_vectors);
-B_Jp_BR = jointToPositionJacobian(q(1:3, 4), hip_yaw_location(1:3, 4), relative_joint_vectors);
-
-% adjust the size of the positional jacobian matrices
-B_Jp_FL = [
-    B_Jp_FL zeros(3,3) zeros(3,3) zeros(3,3);
-];
-B_Jp_BL = [
-    zeros(3,3) B_Jp_BL zeros(3,3) zeros(3,3);
-];
-B_Jp_FR = [
-    zeros(3,3) zeros(3,3) B_Jp_FR zeros(3,3);
-];
-B_Jp_BR = [
-    zeros(3,3) zeros(3,3) zeros(3,3) B_Jp_BR;
-];
-% % Calculate rotational Jacobians w.r.t. frame B
-B_Jr_FL = jointToRotationJacobian(q(1:3, 1), hip_yaw_location(1:3, 1), relative_joint_vectors);
-B_Jr_BL = jointToRotationJacobian(q(1:3, 2), hip_yaw_location(1:3, 2), relative_joint_vectors);
-B_Jr_FR = jointToRotationJacobian(q(1:3, 3), hip_yaw_location(1:3, 3), relative_joint_vectors);
-B_Jr_BR = jointToRotationJacobian(q(1:3, 4), hip_yaw_location(1:3, 4), relative_joint_vectors);
-
-% % Adjust the size of the matrices
-B_Jr_FL = [
-    B_Jr_FL zeros(3,3) zeros(3,3) zeros(3,3)
-];
-
-B_Jr_BL = [
-    zeros(3,3) B_Jr_BL zeros(3,3) zeros(3,3)
-];
-
-B_Jr_FR = [
-    zeros(3,3) zeros(3,3) B_Jr_FR zeros(3,3)
-];
-
-B_Jr_BR = [
-    zeros(3,3) zeros(3,3) B_Jr_BR zeros(3,3)
-];
-
-% % Calculate positional jacobians w.r.t. frame I
-I_Jp_FL = [eye(3) -C_IB*skewMatrix(B_r_BFL) C_IB*B_Jp_FL];
-I_Jp_BL = [eye(3) -C_IB*skewMatrix(B_r_BBL) C_IB*B_Jp_BL];
-I_Jp_FR = [eye(3) -C_IB*skewMatrix(B_r_BFR) C_IB*B_Jp_FR];
-I_Jp_BR = [eye(3) -C_IB*skewMatrix(B_r_BBR) C_IB*B_Jp_BR];
-
-% % Calculate rotational jacobians w.r.t. frame I
-I_Jr_FL = [zeros(3,3) C_IB C_IB*B_Jr_FL];
-I_Jr_BL = [zeros(3,3) C_IB C_IB*B_Jr_BL];
-I_Jr_FR = [zeros(3,3) C_IB C_IB*B_Jr_FR];
-I_Jr_BR = [zeros(3,3) C_IB C_IB*B_Jr_BR];
-
-% % Full transformation matrix
-I_J_FL = [
-    I_Jp_FL;
-    I_Jr_FL;
-];
-
-I_J_BL = [
-    I_Jp_BL;
-    I_Jr_BL;
-];
-
-I_J_FR = [
-    I_Jp_FR;
-    I_Jr_FR;
-];
-
-I_J_BR = [
-    I_Jp_BR;
-    I_Jr_BR;
-];
-% % calculate contact constraints jacobian
 
 % Visualize joint positions
 robot = importrobot("magnecko.urdf");
